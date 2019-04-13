@@ -169,6 +169,7 @@ bool Ekf::initialiseFilter()
 		if ((_ev_counter == 0) && (_ev_sample_delayed.time_us != 0)) {
 			// initialise the counter
 			_ev_counter = 1;
+      _ev_data_ready = true;
 
 			// set the height fusion mode to use external vision data when we start getting valid data from the buffer
 			if (_primary_hgt_source == VDIST_SENSOR_EV) {
@@ -181,6 +182,7 @@ bool Ekf::initialiseFilter()
 		} else if ((_ev_counter != 0) && (_ev_sample_delayed.time_us != 0)) {
 			// increment the sample count
 			_ev_counter ++;
+      _ev_data_ready = true;
 		}
 	}
 
@@ -260,6 +262,9 @@ bool Ekf::initialiseFilter()
 		Vector3f mag_init = _mag_filt_state;
 
 		// calculate the initial magnetic field and yaw alignment
+    if ((_params.fusion_mode & MASK_USE_EVYAW) && (!_ev_data_ready)) {
+        return false;
+    }
 		_control_status.flags.yaw_align = resetMagHeading(mag_init);
 
 		// initialise the rotation from EV to EKF navigation frame if required
